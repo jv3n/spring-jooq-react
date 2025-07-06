@@ -29,6 +29,14 @@ type CountryTable = {
   emoji: string;
 };
 
+type PageResult<T> = {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+};
+
 type Order = 'asc' | 'desc';
 
 export default function CountryTablePage() {
@@ -37,20 +45,42 @@ export default function CountryTablePage() {
   const [orderBy, setOrderBy] = useState<keyof CountryTable>('name');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalElements, setTotalElements] = useState(0);
   const [regions, setRegions] = useState<string[]>([]);
   const router = useRouter();
 
-  useEffect(() => {
-    fetch('/api/country-table')
+  const fetchCountries = (filters: Record<string, string> = {}) => {
+    const requestBody = {
+      ...filters,
+      pageRequest: {
+        page,
+        size: rowsPerPage,
+        sort: [{field: orderBy, ascending: order === 'asc'}]
+      }
+    };
+
+    fetch('/api/countries', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(requestBody),
+    })
     .then((res) => res.json())
-    .then((data) => setCountries(data))
-    .catch((err) => console.error('Erreur fetch', err));
-  }, []);
+    .then((data: PageResult<CountryTable>) => {
+      setCountries(data.content);
+      setTotalElements(data.totalElements);
+    })
+    .catch((err) => console.error('Erreur recherche', err));
+  };
+
+  useEffect(() => {
+    fetchCountries();
+  }, [order, orderBy, page, rowsPerPage]);
 
   const handleRequestSort = (property: keyof CountryTable) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
+    setPage(0);
   };
 
   const handleChangePage = (_: unknown, newPage: number) => {
@@ -62,95 +92,65 @@ export default function CountryTablePage() {
     setPage(0);
   };
 
-  const sortedCountries = [...countries].sort((a, b) => {
-    const aValue = a[orderBy];
-    const bValue = b[orderBy];
-    return (aValue < bValue ? -1 : 1) * (order === 'asc' ? 1 : -1);
-  });
-
-  const visibleCountries = sortedCountries.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
   const handleRowClick = (country: CountryTable) => {
     router.push(`/countries/${country.iso3}`);
   };
 
   const searchCountries = (filters: Record<string, string>) => {
-    fetch('http://127.0.0.1:8080/api/countries/search', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(filters),
-    })
-    .then((res) => res.json())
-    .then(setCountries)
-    .catch((err) => console.error('Erreur recherche', err));
+    setPage(0);
+    fetchCountries(filters);
   };
 
   return (
       <>
         <CountryFilters onSearch={searchCountries} availableRegions={regions}/>
-        <Box
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 2,
-              alignItems: 'center',
-              p: 2,
-              mb: 2,
-              borderRadius: 2,
-              boxShadow: 3,
-              backgroundColor: '#fff',
-            }}
-        >
-
-
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    {['id', 'Name', 'iso3', 'Code', 'Capital', 'Currency', 'Region', 'Subregion', 'Latitude', 'emoji'].map((col) => (
-                        <TableCell key={col}>
-                          <TableSortLabel
-                              active={orderBy === col}
-                              direction={orderBy === col ? order : 'asc'}
-                              onClick={() => handleRequestSort(col as keyof CountryTable)}
-                          >
-                            {col}
-                          </TableSortLabel>
-                        </TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {visibleCountries.map((row) => (
-                      <TableRow key={row.id} hover onClick={() => handleRowClick(row)}
-                                sx={{cursor: 'pointer'}}>
-                        <TableCell>{row.id}</TableCell>
-                        <TableCell>{row.name}</TableCell>
-                        <TableCell>{row.iso3}</TableCell>
-                        <TableCell>{row.numericCode}</TableCell>
-                        <TableCell>{row.capitalName}</TableCell>
-                        <TableCell>{row.currency}</TableCell>
-                        <TableCell>{row.region}</TableCell>
-                        <TableCell>{row.subregion}</TableCell>
-                        <TableCell>{row.latitudeLongitude}</TableCell>
-                        <TableCell>{row.emoji}</TableCell>
-                      </TableRow>
+        <Box sx={{p: 2, mb: 2, borderRadius: 2, boxShadow: 3, backgroundColor: '#fff'}}>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  {['id', 'name', 'iso3', 'numericCode', 'capitalName', 'currency', 'region', 'subregion', 'latitudeLongitude', 'emoji'].map((col) => (
+                      <TableCell key={col}>
+                        <TableSortLabel
+                            active={orderBy === col}
+                            direction={orderBy === col ? order : 'asc'}
+                            onClick={() => handleRequestSort(col as keyof CountryTable)}
+                        >
+                          {col}
+                        </TableSortLabel>
+                      </TableCell>
                   ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {countries.map((row) => (
+                    <TableRow key={row.id} hover onClick={() => handleRowClick(row)} sx={{cursor: 'pointer'}}>
+                      <TableCell>{row.id}</TableCell>
+                      <TableCell>{row.name}</TableCell>
+                      <TableCell>{row.iso3}</TableCell>
+                      <TableCell>{row.numericCode}</TableCell>
+                      <TableCell>{row.capitalName}</TableCell>
+                      <TableCell>{row.currency}</TableCell>
+                      <TableCell>{row.region}</TableCell>
+                      <TableCell>{row.subregion}</TableCell>
+                      <TableCell>{row.latitudeLongitude}</TableCell>
+                      <TableCell>{row.emoji}</TableCell>
+                    </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
 
-            <TablePagination
-                component="div"
-                count={countries.length}
-                page={page}
-                onPageChange={handleChangePage}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-                rowsPerPageOptions={[10, 20, 30]}
-                labelRowsPerPage="Pays par page"
-            />
-
+          <TablePagination
+              component="div"
+              count={totalElements}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[10, 20, 30]}
+              labelRowsPerPage="Pays par page"
+          />
         </Box>
       </>
   );

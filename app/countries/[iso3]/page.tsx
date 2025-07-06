@@ -43,7 +43,7 @@ export default function CountryDetailPage() {
   useEffect(() => {
     if (!iso3) return;
 
-    fetch(`/api/country-detail/${iso3}`)
+    fetch(`/api/countries/${iso3}`)
     .then((res) => res.json())
     .then((data) => {
       setCountry(data.country);
