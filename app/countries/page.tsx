@@ -1,11 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import {
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  TableSortLabel, Paper, TablePagination
+  Box,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  TableSortLabel
 } from '@mui/material';
-import { useRouter } from 'next/navigation';
+import {useRouter} from 'next/navigation';
+import CountryFilters from "@/app/components/CountryFilters";
 
 type CountryTable = {
   id: number;
@@ -28,6 +37,7 @@ export default function CountryTablePage() {
   const [orderBy, setOrderBy] = useState<keyof CountryTable>('name');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [regions, setRegions] = useState<string[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -64,54 +74,84 @@ export default function CountryTablePage() {
     router.push(`/countries/${country.iso3}`);
   };
 
-  return (
-      <Paper sx={{ margin: 2, padding: 2 }}>
-        <TableContainer>
-          <Table>
-            <TableHead sx={{ backgroundColor: '#f3e5f5' }}>
-              <TableRow>
-                {['id', 'Name', 'iso3', 'Code', 'Capital', 'Currency', 'Region', 'Subregion', 'Latitude', 'emoji'].map((col) => (
-                    <TableCell key={col}>
-                      <TableSortLabel
-                          active={orderBy === col}
-                          direction={orderBy === col ? order : 'asc'}
-                          onClick={() => handleRequestSort(col as keyof CountryTable)}
-                      >
-                        {col}
-                      </TableSortLabel>
-                    </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {visibleCountries.map((row) => (
-                  <TableRow key={row.id} hover onClick={() => handleRowClick(row)} sx={{ cursor: 'pointer' }}>
-                    <TableCell>{row.id}</TableCell>
-                    <TableCell>{row.name}</TableCell>
-                    <TableCell>{row.iso3}</TableCell>
-                    <TableCell>{row.numericCode}</TableCell>
-                    <TableCell>{row.capitalName}</TableCell>
-                    <TableCell>{row.currency}</TableCell>
-                    <TableCell>{row.region}</TableCell>
-                    <TableCell>{row.subregion}</TableCell>
-                    <TableCell>{row.latitudeLongitude}</TableCell>
-                    <TableCell>{row.emoji}</TableCell>
-                  </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+  const searchCountries = (filters: Record<string, string>) => {
+    fetch('http://127.0.0.1:8080/api/countries/search', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(filters),
+    })
+    .then((res) => res.json())
+    .then(setCountries)
+    .catch((err) => console.error('Erreur recherche', err));
+  };
 
-        <TablePagination
-            component="div"
-            count={countries.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[10, 20, 30]}
-            labelRowsPerPage="Pays par page"
-        />
-      </Paper>
+  return (
+      <>
+        <CountryFilters onSearch={searchCountries} availableRegions={regions}/>
+        <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 2,
+              alignItems: 'center',
+              p: 2,
+              mb: 2,
+              borderRadius: 2,
+              boxShadow: 3,
+              backgroundColor: '#fff',
+            }}
+        >
+
+
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    {['id', 'Name', 'iso3', 'Code', 'Capital', 'Currency', 'Region', 'Subregion', 'Latitude', 'emoji'].map((col) => (
+                        <TableCell key={col}>
+                          <TableSortLabel
+                              active={orderBy === col}
+                              direction={orderBy === col ? order : 'asc'}
+                              onClick={() => handleRequestSort(col as keyof CountryTable)}
+                          >
+                            {col}
+                          </TableSortLabel>
+                        </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {visibleCountries.map((row) => (
+                      <TableRow key={row.id} hover onClick={() => handleRowClick(row)}
+                                sx={{cursor: 'pointer'}}>
+                        <TableCell>{row.id}</TableCell>
+                        <TableCell>{row.name}</TableCell>
+                        <TableCell>{row.iso3}</TableCell>
+                        <TableCell>{row.numericCode}</TableCell>
+                        <TableCell>{row.capitalName}</TableCell>
+                        <TableCell>{row.currency}</TableCell>
+                        <TableCell>{row.region}</TableCell>
+                        <TableCell>{row.subregion}</TableCell>
+                        <TableCell>{row.latitudeLongitude}</TableCell>
+                        <TableCell>{row.emoji}</TableCell>
+                      </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <TablePagination
+                component="div"
+                count={countries.length}
+                page={page}
+                onPageChange={handleChangePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                rowsPerPageOptions={[10, 20, 30]}
+                labelRowsPerPage="Pays par page"
+            />
+
+        </Box>
+      </>
   );
 }

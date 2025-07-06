@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import {useEffect, useState} from 'react';
+import {useParams, useRouter} from 'next/navigation';
+import {Box, Button, CardContent, List, ListItem, ListItemText, Typography,} from '@mui/material';
 
 type CountryDetail = {
   id: number;
@@ -29,7 +30,12 @@ type CountryDetail = {
 export default function CountryDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const iso3 = typeof params.iso3 === 'string' ? params.iso3 : Array.isArray(params.iso3) ? params.iso3[0] : '';
+  const iso3 =
+      typeof params.iso3 === 'string'
+          ? params.iso3
+          : Array.isArray(params.iso3)
+              ? params.iso3[0]
+              : '';
 
   const [country, setCountry] = useState<CountryDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,42 +55,88 @@ export default function CountryDetailPage() {
     });
   }, [iso3]);
 
-  if (loading) return <p>Loading...</p>;
-  if (!country) return <p>No data found</p>;
+  if (loading) return <Typography>Loading...</Typography>;
+  if (!country) return <Typography>No data found</Typography>;
 
   return (
-      <div className="max-w-5xl mx-auto">
-        {/* Bouton en haut à gauche, en dehors de la card */}
-        <button
+      <>
+        <Button
+            variant="contained"
+            color="secondary"
             onClick={() => router.push('/countries')}
-            className="mb-6 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+            sx={{mb: 3}}
         >
           ← Retour à la liste
-        </button>
+        </Button>
 
-        {/* Card centrée à 75% de largeur */}
-        <div className="bg-white shadow-lg rounded-xl p-6 w-max">
-          <h1 className="text-2xl font-bold mb-4">
-            {country.name} {country.emoji}
-          </h1>
-          <ul className="space-y-2 text-gray-800">
-            <li><strong>ISO3:</strong> {country.iso3}</li>
-            <li><strong>Numeric Code:</strong> {country.numericCode}</li>
-            <li><strong>Phone Code:</strong> {country.phoneCode}</li>
-            <li><strong>Capital:</strong> {country.capitalName}</li>
-            <li><strong>Currency:</strong> {country.currency} ({country.currencySymbol})</li>
-            <li><strong>Currency Name:</strong> {country.currencyName}</li>
-            <li><strong>Top Level Domain:</strong> {country.tld}</li>
-            <li><strong>Native Name:</strong> {country.nativeName}</li>
-            <li><strong>Region:</strong> {country.region}</li>
-            <li><strong>Subregion:</strong> {country.subregion}</li>
-            <li><strong>Nationality:</strong> {country.nationality}</li>
-            <li><strong>Timezones:</strong> {country.timezones}</li>
-            <li><strong>Latitude:</strong> {country.latitude}</li>
-            <li><strong>Longitude:</strong> {country.longitude}</li>
-            <li><strong>Emoji Unicode:</strong> {country.emojiU}</li>
-          </ul>
-        </div>
-      </div>
+        <Box sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 2,
+          alignItems: 'center',
+          p: 2,
+          mb: 2,
+          borderRadius: 2,
+          boxShadow: 3,
+          backgroundColor: '#fff',
+        }}>
+          <CardContent>
+            <CardContent
+                sx={{
+                  display: 'flex',
+                  gap: 4,
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                }}
+            >
+              <Typography component="span" variant="h1">
+                {country.emoji}
+              </Typography>
+              <Typography variant="h5" component="div" gutterBottom>
+                {country.name}
+              </Typography>
+            </CardContent>
+
+            <Box sx={{display: 'flex', gap: 4, flexWrap: 'wrap'}}>
+              <List dense sx={{flex: 1, minWidth: '300px'}}>
+                <ListItem><ListItemText primary="ISO3" secondary={country.iso3}/></ListItem>
+                <ListItem><ListItemText primary="Numeric Code"
+                                        secondary={country.numericCode}/></ListItem>
+                <ListItem><ListItemText primary="Phone Code"
+                                        secondary={country.phoneCode}/></ListItem>
+                <ListItem><ListItemText primary="Capital"
+                                        secondary={country.capitalName}/></ListItem>
+                <ListItem>
+                  <ListItemText
+                      primary="Currency"
+                      secondary={`${country.currency} (${country.currencySymbol})`}
+                  />
+                </ListItem>
+                <ListItem><ListItemText primary="Currency Name"
+                                        secondary={country.currencyName}/></ListItem>
+                <ListItem><ListItemText primary="Top Level Domain"
+                                        secondary={country.tld}/></ListItem>
+                <ListItem><ListItemText primary="Native Name"
+                                        secondary={country.nativeName}/></ListItem>
+              </List>
+
+              <List dense sx={{flex: 1, minWidth: '300px'}}>
+                <ListItem><ListItemText primary="Region" secondary={country.region}/></ListItem>
+                <ListItem><ListItemText primary="Subregion"
+                                        secondary={country.subregion}/></ListItem>
+                <ListItem><ListItemText primary="Nationality"
+                                        secondary={country.nationality}/></ListItem>
+                <ListItem><ListItemText primary="Timezones"
+                                        secondary={country.timezones}/></ListItem>
+                <ListItem><ListItemText primary="Latitude" secondary={country.latitude}/></ListItem>
+                <ListItem><ListItemText primary="Longitude"
+                                        secondary={country.longitude}/></ListItem>
+                <ListItem><ListItemText primary="Emoji Unicode"
+                                        secondary={country.emojiU}/></ListItem>
+              </List>
+            </Box>
+          </CardContent>
+        </Box>
+      </>
   );
 }
