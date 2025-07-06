@@ -109,7 +109,7 @@ export default function CountryTablePage() {
             <Table>
               <TableHead>
                 <TableRow>
-                  {['id', 'name', 'iso3', 'numericCode', 'capitalName', 'currency', 'region', 'subregion', 'latitudeLongitude', 'emoji'].map((col) => (
+                  {['ID', 'Name', 'ISO3', 'Code', 'Name', 'Currency', 'Region', 'Subregion', 'Latitude', 'emoji'].map((col) => (
                       <TableCell key={col}>
                         <TableSortLabel
                             active={orderBy === col}
